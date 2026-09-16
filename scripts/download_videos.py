@@ -41,6 +41,7 @@ def main():
         metadata = cache / f"{video_id}.info.json"
         if not args.skip_download and not (raw.exists() and metadata.exists()):
             subprocess.run(["yt-dlp", "--no-playlist", "--no-progress", "--write-info-json", "--merge-output-format", "mp4",
+                            *(["--js-runtimes", "node"] if shutil.which("node") else []),
                             "--match-filters", "duration <= 90 & !is_live", "-f",
                             "bv*[height<=1280][vcodec^=avc1]+ba[ext=m4a]/b[height<=1280][ext=mp4]/bv*[height<=1280]+ba/b",
                             "-o", str(cache / "%(id)s.%(ext)s"), source], check=True)

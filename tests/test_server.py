@@ -6,8 +6,16 @@ from urllib.request import Request, urlopen
 
 import pytest
 
-from flywirehead.server import Experiment, Handler, ThreadingHTTPServer
+from flywirehead.server import Experiment, Handler, ThreadingHTTPServer, acquire_run_lock
 from flywirehead.engine import FRAME_HEIGHT, FRAME_WIDTH
+
+
+def test_run_directory_lock_is_exclusive_and_released(tmp_path):
+    with acquire_run_lock(tmp_path):
+        with pytest.raises(SystemExit, match="already in use"):
+            acquire_run_lock(tmp_path)
+    with acquire_run_lock(tmp_path):
+        pass
 
 
 @pytest.fixture

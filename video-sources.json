@@ -1,5 +1,12 @@
 {
-  "description": "The five user-selected YouTube Shorts, in the requested order. Prepared at 360×640 and presented for three seconds each.",
-  "ids": ["HOe8Ur6H8x4", "rUmhjdFVPFo", "lYrSza4cYaE", "db5JqXQekmE", "PBWmPoLjVvA"],
-  "trim_end_seconds": {"PBWmPoLjVvA": 4}
+  "description": "Four available Shorts from the original playlist, prepared at 360x640 and presented for three seconds each. rUmhjdFVPFo was unavailable on YouTube during Windows setup.",
+  "ids": [
+    "HOe8Ur6H8x4",
+    "lYrSza4cYaE",
+    "db5JqXQekmE",
+    "PBWmPoLjVvA"
+  ],
+  "trim_end_seconds": {
+    "PBWmPoLjVvA": 4
+  }
 }

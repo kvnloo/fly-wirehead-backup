@@ -11,6 +11,7 @@ dependencies = ["numpy==2.4.6", "pandas==3.0.5", "pyarrow==25.0.1", "Pillow==12.
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
+windows = ["ziglang==0.16.0", "yt-dlp[default]==2026.8.19"]
 
 [project.scripts]
 flywirehead = "flywirehead.cli:main"

@@ -3,7 +3,7 @@
 from collections import deque
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-import fcntl
+import errno
 import json
 import os
 from pathlib import Path
@@ -243,26 +243,39 @@ class Handler(SimpleHTTPRequestHandler):
             return self.respond(409, {"error": str(error)})
 
 
+def acquire_run_lock(run_dir):
+    lock = (run_dir / "worker.lock").open("a")
+    try:
+        if os.name == "nt":
+            import msvcrt
+            lock.seek(0)
+            msvcrt.locking(lock.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as error:
+        lock.close()
+        if error.errno in (errno.EACCES, errno.EAGAIN):
+            raise SystemExit("This run directory is already in use by another brain process") from None
+        raise
+    return lock
+
+
 def serve(args):
     run_dir = args.run_dir.resolve()
     run_dir.mkdir(parents=True, exist_ok=True)
-    lock = (run_dir / "worker.lock").open("a")
-    try:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except BlockingIOError:
-        raise SystemExit("This run directory is already in use by another brain process")
-    experiment = Experiment(run_dir, neural_ms=args.neural_ms, fresh=args.fresh, frozen=args.frozen, video_reward=not args.no_video_reward)
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(Handler, experiment=experiment))
-    experiment.start()
-    url = f"http://127.0.0.1:{server.server_port}"
-    print(f"Fly Wirehead: {url}\nCtrl-C saves the brain and exits.", flush=True)
-    if not args.no_browser:
-        webbrowser.open(url)
-    try:
-        server.serve_forever(poll_interval=.2)
-    except KeyboardInterrupt:
-        print("Saving brain state…", flush=True)
-    finally:
-        server.server_close()
-        experiment.stop()
-        lock.close()
+    with acquire_run_lock(run_dir):
+        experiment = Experiment(run_dir, neural_ms=args.neural_ms, fresh=args.fresh, frozen=args.frozen, video_reward=not args.no_video_reward)
+        server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(Handler, experiment=experiment))
+        experiment.start()
+        url = f"http://127.0.0.1:{server.server_port}"
+        print(f"Fly Wirehead: {url}\nCtrl-C saves the brain and exits.", flush=True)
+        if not args.no_browser:
+            webbrowser.open(url)
+        try:
+            server.serve_forever(poll_interval=.2)
+        except KeyboardInterrupt:
+            print("Saving brain state…", flush=True)
+        finally:
+            server.server_close()
+            experiment.stop()

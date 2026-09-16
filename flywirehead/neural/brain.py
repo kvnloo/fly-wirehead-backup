@@ -17,6 +17,7 @@ from .state import NativeBrain
 
 SOURCE = Path(__file__).with_name("kernel.cpp")
 LIBRARY = (OUT / "physiology-v6") / (
+    "libmemory.dll" if sys.platform == "win32" else
     "libmemory.dylib" if sys.platform == "darwin" else "libmemory.so"
 )
 MODEL = "stonkfly-dual-compartment-v1"
@@ -46,16 +47,19 @@ def build():
             return record
     LIBRARY.parent.mkdir(parents=True, exist_ok=True)
     temp = LIBRARY.with_suffix(LIBRARY.suffix + ".partial")
-    subprocess.run(
-        ["c++", "-O3", "-std=c++17", "-shared", "-fPIC", str(SOURCE), "-o", str(temp)],
-        check=True,
-    )
+    if sys.platform == "win32":
+        compiler = [sys.executable, "-m", "ziglang", "c++"]
+        flags = ["-target", "x86_64-windows-gnu", "-O3", "-std=c++17", "-shared", "-Wl,--export-all-symbols"]
+    else:
+        compiler = ["c++"]
+        flags = ["-O3", "-std=c++17", "-shared", "-fPIC"]
+    subprocess.run([*compiler, *flags, str(SOURCE), "-o", str(temp)], check=True)
     temp.replace(LIBRARY)
     record = {
         "model": MODEL,
         "source_sha256": sha,
         "binary_sha256": hashlib.sha256(LIBRARY.read_bytes()).hexdigest(),
-        "flags": ["-O3", "-std=c++17", "-shared", "-fPIC"],
+        "flags": flags,
     }
     save_json(metadata, record)
     return record

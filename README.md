@@ -43,6 +43,23 @@ python -m flywirehead run
 
 </details>
 
+### Windows
+
+Run `windows_build.cmd` once to install the Windows dependencies, compile the
+neural DLL with Zig, verify the connectome, and prepare the videos. Then run
+`windows_start.cmd` to open the experiment. Visual Studio is not required.
+Missing uv, FFmpeg/FFprobe and Node.js 22+ are installed through WinGet.
+
+The CMD files require the Windows changes in `pyproject.toml`, `uv.lock`,
+`flywirehead/neural/brain.py` and `flywirehead/server.py`. Copying only the
+launchers onto an upstream checkout is not enough. Do not remove `--extra windows`
+to work around a missing extra: it supplies the compiler and video downloader.
+
+The first build needs internet and downloads about 1.1 GB of neural data, plus
+dependencies and videos. Repeated builds reuse the cache. The playlist contains
+four clips; the unavailable `rUmhjdFVPFo` has been excluded. Keep the server console
+open while using the app; Ctrl-C saves the state and exits.
+
 ## What the fly receives
 
 The browser captures the phone's image at **90×160 pixels**. Luminance and color stimulate **3,335 R1–R6 inputs and 811 R8 inputs** in the full retained MaleCNS v1.0 graph. A compiled spiking-network kernel advances **50 ms of neural time** per accepted frame, using **0.1 ms integration steps**.
